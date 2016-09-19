@@ -21,13 +21,17 @@ class Asignaturas(QtGui.QWidget):
         q = self.ObtengoCalificaciones()
 
         if q.size() > 0:
+            '''Creo la lista con todos los objetos a presentar en pantalla'''
+
             '''Proceso FOBA'''
             ctrl = 1
-            layFoba = self.ListoFOBA(ctrl)
+            if self.Chequeo('FOBA') is True:
+                print("FOBA està completo")
+            else:
+                print("FOBA incompleto")
 
-            layCursos = self.ListoCursos()
 
-            self.lista = [layFoba, layCursos]
+
 
         else:
 
@@ -71,9 +75,30 @@ class Asignaturas(QtGui.QWidget):
             print(self.db.database('asignaturas').lastError())
 
     def ListoMaterias(self, ctrl, c):
-        pass
+        print(control)
+        q = self.MateriasFoba(control)
+        if isinstance(q, list):
+            gl = self.CreoGridLista(q, "Materias FOBA")
+        else:
+            gl = self.CreoGrid(q, "Materias FOBA")
+        gl.setObjectName("GFoba")
+        print("paso por aca")
+        return gl
 
+    def Chequeo(self, c):
+        sql = "SELECT Count(*) from asignaturas " \
+        "INNER JOIN calificaciones " \
+        "on asignaturas.id_asignatura = calificaciones.id_asign " \
+        "INNER JOIN carreras on asignaturas.carrera = carreras.id_carrera " \
+        "WHERE carreras.nombre = :carrera AND alumno = :dni AND nota >= 4"
+        q = QtSql.QSqlQuery(self.db.database('asignaturas'))
+        q.prepare(sql)
+        q.bindValue(":dni", int(self.dni))
+        q.bindValue(":carrera", c)
+        estado = self.ejecuto(q)
 
+        if q.size() = q.value(10):
+            print (q.value(10))
     def ListoFOBA(self, control=0):
         print(control)
         q = self.MateriasFoba(control)
@@ -162,19 +187,17 @@ class Asignaturas(QtGui.QWidget):
         sql = "SELECT * from asignaturas INNER JOIN carreras on asignaturas.carrera = carreras.id_carrera WHERE carreras.nombre = 'FOBA'"
         foba = QtSql.QSqlQuery(self.db.database('asignaturas'))
         foba.prepare(sql)
+        '''foba es un objeto QtSql.Query con todas las materias FOBA'''
         foba = self.ejecuto(foba)
-#        sql = "SELECT asignaturas.*, carreras.nombre as c, calificaciones.alumno as alumno, calificaciones.nota as nota FROM asignaturas INNER JOIN carreras on asignaturas.carrera = carreras.id_carrera INNER JOIN calificaciones on asignaturas.id_asignatura = calificaciones.id_asign WHERE carreras.nombre = :carrera AND alumno = :dni"
         sql = "SELECT * from calificaciones WHERE alumno = :dni"
         q = QtSql.QSqlQuery(self.db.database('asignaturas'))
         q.prepare(sql)
         q.bindValue(":dni", int(self.dni))
         estado = self.ejecuto(q)
-        print("Cantidad de elementos " + str(estado.size()))
         '''Proceso para presentar todas las materias FOBA disponibles para cursar'''
         if estado.size() < 8:
             l = []
-            vuelta = 0
-            "Agrego todas las materias"
+            '''Agrego todas las materias'''
             while foba.next():
                 l.append(foba.record())
             while estado.next():
@@ -183,6 +206,7 @@ class Asignaturas(QtGui.QWidget):
                         l.remove(i)
         else:
             l = "FOBA Completo"
+        '''L es un List con todas las materias FOBA que estèn disponibles para el alumno'''
         return l
 
     def Chequea_Aprobado(self, f, e):
